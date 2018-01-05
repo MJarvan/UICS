@@ -147,6 +147,12 @@ namespace UICS
 			}
 		}
 
+
+		private void test_Click(object sender,RoutedEventArgs e)
+		{
+			Clipboard.SetText(FFTextbox.Text);
+		}
+
 		/// <summary>
 		/// 选择路径
 		/// </summary>
@@ -382,6 +388,11 @@ namespace UICS
 					button.Visibility = Visibility.Visible;
 				}
 			}
+			Rect rc = SystemParameters.WorkArea;//获取工作区大小  
+			this.Left = 0;//设置位置  
+			this.Top = 0;
+			this.Width = rc.Width;
+			this.Height = rc.Height;
 		}
 
 		/// <summary>
@@ -740,5 +751,6 @@ namespace UICS
 			return returnname;
 		}
 		#endregion
+
 	}
 }

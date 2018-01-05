@@ -91,7 +91,7 @@
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="*" />
 				<ColumnDefinition Width="2*" />
-				<ColumnDefinition Width="2*" />
+				<ColumnDefinition Width="3*" />
 				<ColumnDefinition Width="*" />
 			</Grid.ColumnDefinitions>
 			<!--改变尺寸部分-->
@@ -145,7 +145,8 @@
 			<StackPanel Grid.Column="2" VerticalAlignment="Center">
 				<Grid>
 					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="5*"/>
+						<ColumnDefinition Width="7*"/>
+						<ColumnDefinition Width="2*"/>
 						<ColumnDefinition Width="2*"/>
 						<ColumnDefinition Width="2*"/>
 					</Grid.ColumnDefinitions>
@@ -154,12 +155,14 @@
 						<TextBox Grid.Column="0" VerticalContentAlignment="Center" MinWidth="150" Margin="10,0,10,0" ToolTip="请输入搜索内容" Height="40" HorizontalAlignment="Center" FontSize="16" Name="searchTextBox" KeyDown="searchTextBox_KeyDown"></TextBox>
 					</StackPanel>
 					<StackPanel Grid.Column="1" VerticalAlignment="Center">
-						<Button Width="50" Margin="10,0,0,0" FontSize="16" HorizontalAlignment="Left" Name="searchButton" Click="searchButton_Click">搜索</Button>
+						<Button Width="50" Margin="5,0,0,0" FontSize="16" HorizontalAlignment="Left" Name="searchButton" Click="searchButton_Click">搜索</Button>
 					</StackPanel>
 					<StackPanel Grid.Column="2" VerticalAlignment="Center">
-						<Button Width="50" Margin="10,0,10,0" FontSize="16" HorizontalAlignment="Left" Name="showAll" Click="showAll_Click">全部</Button>
+						<Button Width="50" Margin="5,0,5,0" FontSize="16" HorizontalAlignment="Left" Name="showAll" Click="showAll_Click">全部</Button>
 					</StackPanel>
-
+					<StackPanel Grid.Column="3" VerticalAlignment="Center">
+						<Button Width="50" Margin="5,0,5,0" FontSize="16" HorizontalAlignment="Left" Name="test" Click="test_Click">测试</Button>
+					</StackPanel>
 				</Grid>
 			</StackPanel>
 			<Button Name="choiceButton" Grid.Column="3" FontSize="16" Content="选择路径" Click="choiceButton_Click"></Button>
