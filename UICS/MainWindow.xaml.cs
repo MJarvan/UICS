@@ -416,66 +416,23 @@ namespace UICS
 		/// <param name="e"></param>
 		private void MatchButton_Click(object sender,RoutedEventArgs e)
 		{
-			if(MatchButton.Tag != null)
 			{
-				int index = (int)MatchButton.Tag;
-				switch(index)
+				if(RTextbox.Text != null && RTextbox.Text != "" && GTextbox.Text != null && GTextbox.Text != "" && BTextbox.Text != null && BTextbox.Text != "")
 				{
-					case 1:
-						{
-							if(RTextbox.Text != null && RTextbox.Text != "" && GTextbox.Text != null && GTextbox.Text != "" && BTextbox.Text != null && BTextbox.Text != "")
-							{
-								byte R = Convert.ToByte(RTextbox.Text);
-								byte G = Convert.ToByte(GTextbox.Text);
-								byte B = Convert.ToByte(BTextbox.Text);
-								SolidColorBrush scBrush = new SolidColorBrush(Color.FromRgb(R,G,B));
-								ColorGrid.Background = scBrush;
-								wrappanel.Background = scBrush;
-								FFTextbox.Text = scBrush.Color.ToString().Remove(0,1);
-							}
-							else
-							{
-								MessageBox.Show("请输入RGB数值!");
-							}
-							break;
-						}
-					case 2:
-						{
-							string text = FFTextbox.Text.Trim();
-
-							if(text != null && text != "")
-							{
-								if(text.Length == 3 || text.Length == 4 || text.Length == 6 || text.Length == 8)
-								{
-									SolidColorBrush scBrush = new SolidColorBrush((Color)(ColorConverter.ConvertFromString("#" + text)));
-									ColorGrid.Background = scBrush;
-									wrappanel.Background = scBrush;
-									RTextbox.Text = scBrush.Color.R.ToString();
-									GTextbox.Text = scBrush.Color.G.ToString();
-									BTextbox.Text = scBrush.Color.B.ToString();
-									SolidColorBrush sb = new SolidColorBrush((Color)(ColorConverter.ConvertFromString("#" + FFTextbox.Text)));
-									FFTextbox.Text = sb.Color.ToString().Remove(0,1);
-								}
-								else
-								{
-									MessageBox.Show("输入的数据有误!请重新输入!");
-								}
-							}
-							else
-							{
-								MessageBox.Show("请输入数据!");
-							}
-							break;
-						}
-					default:
-						{
-							break;
-						}
+					byte R = Convert.ToByte(RTextbox.Text);
+					byte G = Convert.ToByte(GTextbox.Text);
+					byte B = Convert.ToByte(BTextbox.Text);
+					SolidColorBrush scBrush = new SolidColorBrush(Color.FromRgb(R,G,B));
+					if(sender.GetType() == typeof(TextBox))
+					{
+						ColorGrid.Background = scBrush;
+					}
+					else if(sender.GetType() == typeof(Button))
+					{
+						wrappanel.Background = scBrush;
+					}
+					FFTextbox.Text = scBrush.Color.ToString().Remove(0,1);
 				}
-			}
-			else
-			{
-				MessageBox.Show("请输入数据!");
 			}
 		}
 
@@ -496,17 +453,8 @@ namespace UICS
 					textbox.Text = textbox.Text.Remove(textbox.Text.Length - 1,1);
 					textbox.SelectionStart = textbox.Text.Length;
 				}
-				else
-				{
-					MatchButton.Tag = 1;
-					int num = Convert.ToInt32(textbox.Text);
-					if(num > 255)
-					{
-						MessageBox.Show("该值在0-255的范围内!");
-						textbox.Text = null;
-					}
-				}
 			}
+			MatchButton_Click(sender,e);
 		}
 
 		/// <summary>
@@ -528,7 +476,7 @@ namespace UICS
 			{
 				if(textbox.Name == "FFTextbox" || textbox.Name == "BTextbox")
 				{
-					MatchButton.Focus();
+					//MatchButton.Focus();
 					MatchButton_Click(sender,e);
 				}
 				else if(textbox.Name == "RTextbox")
@@ -626,10 +574,21 @@ namespace UICS
 					textbox.Text = textbox.Text.Remove(textbox.Text.Length - 1,1);
 					textbox.SelectionStart = textbox.Text.Length;
 				}
-				else
-				{
-					MatchButton.Tag = 2;
-				}
+			}
+		}
+
+		private void CMD_MouseEnter(object sender,MouseEventArgs e)
+		{
+			popup.IsOpen = true;
+			popup.StaysOpen = true;
+		}
+
+		private void PopupMouseLeave(object sender,MouseEventArgs e)
+		{
+			if(!popup.IsMouseOver)
+			{
+				popup.IsOpen = false;
+				popup.StaysOpen = false;
 			}
 		}
 
