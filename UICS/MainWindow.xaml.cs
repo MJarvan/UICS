@@ -296,8 +296,8 @@ namespace UICS
 
 								wrappanel.Children.Add(button);
 							}
-							#endregion
 						}
+						#endregion
 					}
 					else
 					{
@@ -457,38 +457,38 @@ namespace UICS
 			MatchButton_Click(sender,e);
 		}
 
-		/// <summary>
-		/// 空格或enter特殊处理
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void ColorTextbox_KeyDownOrUp(object sender,KeyEventArgs e)
-		{
-			TextBox textbox = sender as TextBox;
-			string text = textbox.Text.Trim();
+		///// <summary>
+		///// 空格或enter特殊处理
+		///// </summary>
+		///// <param name="sender"></param>
+		///// <param name="e"></param>
+		//private void ColorTextbox_KeyDownOrUp(object sender,KeyEventArgs e)
+		//{
+		//	TextBox textbox = sender as TextBox;
+		//	string text = textbox.Text.Trim();
 
-			if(e.Key == Key.Space)
-			{
-				textbox.Text = textbox.Text.Trim();
-				textbox.SelectionStart = textbox.Text.Length;
-			}
-			else if(e.Key == Key.Enter)   //  if (e.KeyValue == 13) 判断是回车键
-			{
-				if(textbox.Name == "FFTextbox" || textbox.Name == "BTextbox")
-				{
-					//MatchButton.Focus();
-					MatchButton_Click(sender,e);
-				}
-				else if(textbox.Name == "RTextbox")
-				{
-					GTextbox.Focus();
-				}
-				else if(textbox.Name == "GTextbox")
-				{
-					BTextbox.Focus();
-				}
-			}
-		}
+		//	if(e.Key == Key.Space)
+		//	{
+		//		textbox.Text = textbox.Text.Trim();
+		//		textbox.SelectionStart = textbox.Text.Length;
+		//	}
+		//	else if(e.Key == Key.Enter)   //  if (e.KeyValue == 13) 判断是回车键
+		//	{
+		//		if(textbox.Name == "FFTextbox" || textbox.Name == "BTextbox")
+		//		{
+		//			//MatchButton.Focus();
+		//			MatchButton_Click(sender,e);
+		//		}
+		//		else if(textbox.Name == "RTextbox")
+		//		{
+		//			GTextbox.Focus();
+		//		}
+		//		else if(textbox.Name == "GTextbox")
+		//		{
+		//			BTextbox.Focus();
+		//		}
+		//	}
+		//}
 
 		/// <summary>
 		/// 保存事件
