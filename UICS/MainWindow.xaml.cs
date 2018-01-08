@@ -577,12 +577,22 @@ namespace UICS
 			}
 		}
 
+		/// <summary>
+		/// 弹出框鼠标移入
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
 		private void CMD_MouseEnter(object sender,MouseEventArgs e)
 		{
 			popup.IsOpen = true;
 			popup.StaysOpen = true;
 		}
 
+		/// <summary>
+		/// 弹出框鼠标移出
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
 		private void PopupMouseLeave(object sender,MouseEventArgs e)
 		{
 			if(!popup.IsMouseOver)
