@@ -46,6 +46,30 @@ namespace UICS
 		private void Window_Loaded(object sender,RoutedEventArgs e)
 		{
 			LoadColor();
+			scrollviewer.DragEnter += scDragEnter;
+			scrollviewer.Drop += scDrop;
+		}
+
+		private void scDrop(object sender,DragEventArgs e)
+		{
+			if(e.Data.GetDataPresent(DataFormats.FileDrop))
+			{
+				e.Effects = DragDropEffects.Link;
+
+				string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
+				foreach(string path in paths)
+				{
+					CreateImage(path);
+				}
+			}
+		}
+
+		private void scDragEnter(object sender,DragEventArgs e)
+		{
+			if(e.Data.GetDataPresent(DataFormats.FileDrop))
+				e.Effects = DragDropEffects.Link;
+			else
+				e.Effects = DragDropEffects.None;
 		}
 
 		/// <summary>
@@ -174,7 +198,7 @@ namespace UICS
 		}
 
 		/// <summary>
-		/// 递归生成图片
+		/// 递归寻找图片
 		/// </summary>
 		/// <param name="FolderPath"></param>
 		private void ShowImage(string FolderPath)
@@ -185,119 +209,7 @@ namespace UICS
 				{
 					if(File.Exists(d))
 					{
-						#region 生成图片
-						using(FileStream fileStream = new FileStream(d,FileMode.Open,FileAccess.Read,FileShare.Read))
-						{
-
-							//获取包含扩展名的文件名 
-							//string fileFullName = fileStream.Name.Substring(fileStream.Name.LastIndexOf("\\") + 1);
-							//获取扩展名
-							string fileTypeName = fileStream.Name.Substring(fileStream.Name.LastIndexOf(".") + 1);
-							//获取不包含扩展名的文件名
-							string fileName = fileStream.Name.Substring(fileStream.Name.LastIndexOf("\\") + 1,fileStream.Name.LastIndexOf(".") - fileStream.Name.LastIndexOf("\\") - 1);
-
-							//名字容错
-							if(fileName.Contains("、") || fileName.Contains("(") || fileName.Contains(")") || fileName.Contains("（") || fileName.Contains("）") || fileName.Contains("-") || fileName.Contains("[") || fileName.Contains("]"))
-							{
-								fileName = fileName.Replace("(","_");
-								fileName = fileName.Replace(")","_");
-								fileName = fileName.Replace("（","_");
-								fileName = fileName.Replace("）","_");
-								fileName = fileName.Replace("、","_");
-								fileName = fileName.Replace("-","_");
-								fileName = fileName.Replace("[","_");
-								fileName = fileName.Replace("]","_");
-							}
-
-							fileStream.Flush();
-							fileStream.Close();
-							fileStream.Dispose();
-
-							if(fileTypeName == "png")
-							{
-								ImageBrush imagebrush = new ImageBrush();
-								BitmapImage bi = new BitmapImage(new Uri(d));
-								double dpix = Math.Round(bi.DpiX,MidpointRounding.AwayFromZero);
-								double dpiy = Math.Round(bi.DpiY,MidpointRounding.AwayFromZero);
-
-								imagebrush.ImageSource = bi;
-
-								TextBlock textblock = new TextBlock();
-								textblock.Text = fileName;
-								textblock.TextWrapping = TextWrapping.Wrap;
-								textblock.VerticalAlignment = VerticalAlignment.Center;
-								//textblock.HorizontalAlignment = HorizontalAlignment.Center;
-
-								fileName = TransformNumbers(fileName);
-
-								Button button = new Button();
-								try
-								{
-									button.Name = fileName;
-									ImageName.Add(fileName);
-								}
-								catch(Exception ex)
-								{
-									MessageBox.Show(ex.Message + "使用功能时会导致程序崩溃，请重新命名。");
-								}
-
-								WrapPanel wpanel = new WrapPanel();
-								wpanel.Orientation = Orientation.Vertical;
-								wpanel.Children.Add(new TextBlock() { Text = "X.DPI= " + dpix.ToString() });
-								wpanel.Children.Add(new TextBlock() { Text = "Y.DPI= " + dpiy.ToString() });
-								wpanel.Children.Add(new TextBlock() { Text = textblock.Text.ToString() });
-
-								button.ToolTip = wpanel;
-								button.Margin = new Thickness(20);
-								button.Background = new SolidColorBrush(Colors.Transparent);
-								button.BorderThickness = new Thickness(0);
-								button.Style = Resources["WindowStateButtonStyle"] as Style;
-
-								Grid grid = new Grid();
-								RowDefinition cd1 = new RowDefinition();
-								cd1.Height = new GridLength(1,GridUnitType.Auto);
-								grid.RowDefinitions.Add(cd1);
-								RowDefinition cd2 = new RowDefinition();
-								cd2.Height = new GridLength(1,GridUnitType.Auto);
-								grid.RowDefinitions.Add(cd2);
-
-								Grid imageGrid = new Grid();
-								imageGrid.Background = imagebrush;
-
-								if(sizeCombobox.SelectedItem != null)
-								{
-									ComboBoxItem cbi = sizeCombobox.SelectedItem as ComboBoxItem;
-									imageGrid.Width = Convert.ToInt32(cbi.Tag);
-									imageGrid.Height = Convert.ToInt32(cbi.Tag);
-									if(Convert.ToInt32(cbi.Tag) >= 128)
-									{
-										button.Width = Convert.ToInt32(cbi.Tag) * 1.5;
-										button.Height = Convert.ToInt32(cbi.Tag) * 1.5;
-									}
-									else
-									{
-										button.Width = 128;
-										button.Height = 128;
-									}
-								}
-								else
-								{
-									imageGrid.Width = 32;
-									imageGrid.Height = 32;
-									button.Width = 128;
-									button.Height = 128;
-								}
-
-								grid.Children.Add(imageGrid);
-								grid.Children.Add(textblock);
-								Grid.SetRow(imageGrid,0);
-								Grid.SetRow(textblock,1);
-								button.Content = grid;
-
-								wrappanel.Children.Add(button);
-							}
-						}
-						#endregion
+						CreateImage(d);
 					}
 					else
 					{
@@ -305,6 +217,148 @@ namespace UICS
 					}
 				}
 			}
+		}
+
+		/// <summary>
+		/// 生成图片
+		/// </summary>
+		/// <param name="imagePath"></param>
+		private void CreateImage(string imagePath)
+		{
+			#region 生成图片
+			using(FileStream fileStream = new FileStream(imagePath,FileMode.Open,FileAccess.Read,FileShare.Read))
+			{
+
+				//获取包含扩展名的文件名 
+				//string fileFullName = fileStream.Name.Substring(fileStream.Name.LastIndexOf("\\") + 1);
+				//获取扩展名
+				string fileTypeName = fileStream.Name.Substring(fileStream.Name.LastIndexOf(".") + 1);
+				//获取不包含扩展名的文件名
+				string fileName = fileStream.Name.Substring(fileStream.Name.LastIndexOf("\\") + 1,fileStream.Name.LastIndexOf(".") - fileStream.Name.LastIndexOf("\\") - 1);
+
+				fileName = CheckFileName(fileName);
+
+				fileStream.Flush();
+				fileStream.Close();
+				fileStream.Dispose();
+
+				if(fileTypeName == "png" || fileTypeName == "jpg")
+				{
+					ImageBrush imagebrush = new ImageBrush();
+					BitmapImage bi = new BitmapImage(new Uri(imagePath));
+					double dpix = Math.Round(bi.DpiX,MidpointRounding.AwayFromZero);
+					double dpiy = Math.Round(bi.DpiY,MidpointRounding.AwayFromZero);
+
+					imagebrush.ImageSource = bi;
+
+					TextBlock textblock = new TextBlock();
+					textblock.Text = fileName;
+					textblock.TextWrapping = TextWrapping.Wrap;
+					textblock.VerticalAlignment = VerticalAlignment.Center;
+					//textblock.HorizontalAlignment = HorizontalAlignment.Center;
+
+					fileName = TransformNumbers(fileName);
+
+					Button button = new Button();
+					try
+					{
+						button.Name = fileName;
+						ImageName.Add(fileName);
+					}
+					catch(Exception ex)
+					{
+						MessageBox.Show(ex.Message + " 使用功能时会导致程序崩溃，请重新命名。");
+					}
+
+					WrapPanel wpanel = new WrapPanel();
+					wpanel.Orientation = Orientation.Vertical;
+					wpanel.Children.Add(new TextBlock() { Text = "X.DPI= " + dpix.ToString() });
+					wpanel.Children.Add(new TextBlock() { Text = "Y.DPI= " + dpiy.ToString() });
+					wpanel.Children.Add(new TextBlock() { Text = textblock.Text.ToString() });
+
+					button.ToolTip = wpanel;
+					button.Margin = new Thickness(20);
+					button.Background = new SolidColorBrush(Colors.Transparent);
+					button.BorderThickness = new Thickness(0);
+					button.Style = Resources["WindowStateButtonStyle"] as Style;
+
+					Grid grid = new Grid();
+					RowDefinition cd1 = new RowDefinition();
+					cd1.Height = new GridLength(1,GridUnitType.Auto);
+					grid.RowDefinitions.Add(cd1);
+					RowDefinition cd2 = new RowDefinition();
+					cd2.Height = new GridLength(1,GridUnitType.Auto);
+					grid.RowDefinitions.Add(cd2);
+
+					Grid imageGrid = new Grid();
+					imageGrid.Background = imagebrush;
+
+					if(sizeCombobox.SelectedItem != null)
+					{
+						ComboBoxItem cbi = sizeCombobox.SelectedItem as ComboBoxItem;
+						imageGrid.Width = Convert.ToInt32(cbi.Tag);
+						imageGrid.Height = Convert.ToInt32(cbi.Tag);
+						if(Convert.ToInt32(cbi.Tag) >= 128)
+						{
+							button.Width = Convert.ToInt32(cbi.Tag) * 1.5;
+							button.Height = Convert.ToInt32(cbi.Tag) * 1.5;
+						}
+						else
+						{
+							button.Width = 128;
+							button.Height = 128;
+						}
+					}
+					else
+					{
+						imageGrid.Width = 32;
+						imageGrid.Height = 32;
+						button.Width = 128;
+						button.Height = 128;
+					}
+
+					grid.Children.Add(imageGrid);
+					grid.Children.Add(textblock);
+					Grid.SetRow(imageGrid,0);
+					Grid.SetRow(textblock,1);
+					button.Content = grid;
+
+					wrappanel.Children.Add(button);
+				}
+			}
+			#endregion
+		}
+
+		/// <summary>
+		/// 名字容错
+		/// </summary>
+		/// <param name="fileName"></param>
+		/// <returns></returns>
+		private string CheckFileName(string fileName)
+		{
+			//名字容错
+			if(fileName.Contains("、") || fileName.Contains("(") || fileName.Contains(")") || fileName.Contains("（") ||
+			   fileName.Contains("）") || fileName.Contains("-") || fileName.Contains("[") || fileName.Contains("]") ||
+			   fileName.Contains("&") || fileName.Contains("{") || fileName.Contains("}") || fileName.Contains("$") ||
+			   fileName.Contains("`") || fileName.Contains("~"))
+			{
+				fileName = fileName.Replace("(","_");
+				fileName = fileName.Replace(")","_");
+				fileName = fileName.Replace("（","_");
+				fileName = fileName.Replace("）","_");
+				fileName = fileName.Replace("、","_");
+				fileName = fileName.Replace("-","_");
+				fileName = fileName.Replace("[","_");
+				fileName = fileName.Replace("]","_");
+				fileName = fileName.Replace("&","_");
+				fileName = fileName.Replace("{","_");
+				fileName = fileName.Replace("}","_");
+				fileName = fileName.Replace("$","_");
+				fileName = fileName.Replace("`","_");
+				fileName = fileName.Replace("~","_");
+			}
+
+			return fileName;
 		}
 
 		/// <summary>

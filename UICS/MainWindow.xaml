@@ -182,7 +182,7 @@
 		</Grid>
 
 		<!--下方图片预览内容部分-->
-		<ScrollViewer Grid.Row="1">
+		<ScrollViewer Name="scrollviewer" Grid.Row="1" AllowDrop="True">
 			<WrapPanel Name="wrappanel" Orientation="Horizontal">
 
 			</WrapPanel>
