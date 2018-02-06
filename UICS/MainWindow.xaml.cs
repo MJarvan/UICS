@@ -52,6 +52,11 @@ namespace UICS
 
 		private void scDrop(object sender,DragEventArgs e)
 		{
+			//foreach(string str in e.Data.GetFormats())
+			//{
+			//	MessageBox.Show(str);
+			//}
+
 			if(e.Data.GetDataPresent(DataFormats.FileDrop))
 			{
 				e.Effects = DragDropEffects.Link;
@@ -67,9 +72,13 @@ namespace UICS
 		private void scDragEnter(object sender,DragEventArgs e)
 		{
 			if(e.Data.GetDataPresent(DataFormats.FileDrop))
+			{
 				e.Effects = DragDropEffects.Link;
+			}
 			else
+			{
 				e.Effects = DragDropEffects.None;
+			}
 		}
 
 		/// <summary>
@@ -340,7 +349,7 @@ namespace UICS
 			if(fileName.Contains("、") || fileName.Contains("(") || fileName.Contains(")") || fileName.Contains("（") ||
 			   fileName.Contains("）") || fileName.Contains("-") || fileName.Contains("[") || fileName.Contains("]") ||
 			   fileName.Contains("&") || fileName.Contains("{") || fileName.Contains("}") || fileName.Contains("$") ||
-			   fileName.Contains("`") || fileName.Contains("~"))
+			   fileName.Contains("`") || fileName.Contains("~") || fileName.Contains("@") || fileName.Contains("%"))
 			{
 				fileName = fileName.Replace("(","_");
 				fileName = fileName.Replace(")","_");
@@ -356,6 +365,8 @@ namespace UICS
 				fileName = fileName.Replace("$","_");
 				fileName = fileName.Replace("`","_");
 				fileName = fileName.Replace("~","_");
+				fileName = fileName.Replace("@","_");
+				fileName = fileName.Replace("%","_");
 			}
 
 			return fileName;
