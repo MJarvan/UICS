@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Microsoft.VisualBasic.Devices;
 
 namespace UICS
 {
@@ -40,14 +41,100 @@ namespace UICS
 		/// <summary>
 		/// 图片路径
 		/// </summary>
-		static string ColorPath;
+		private static string ColorPath;
 
-		
+		/// <summary>
+		/// 右键菜单
+		/// </summary>
+		ContextMenu cm = new ContextMenu();
+
+		/// <summary>
+		/// 重命名字符
+		/// </summary>
+		public string renameStr
+		{
+			get; set;
+		}
+
+
+
 		private void Window_Loaded(object sender,RoutedEventArgs e)
 		{
+			ContextMenuCreate();
 			LoadColor();
 			scrollviewer.DragEnter += scDragEnter;
 			scrollviewer.Drop += scDrop;
+		}
+
+		/// <summary>
+		/// 创建右键菜单
+		/// </summary>
+		private void ContextMenuCreate()
+		{
+			MenuItem rename = new MenuItem();
+			rename.Header = "重命名";
+			rename.Click += Rename_Click;
+			cm.Items.Add(rename);
+		}
+
+		/// <summary>
+		/// 重命名事件
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void Rename_Click(object sender,RoutedEventArgs e)
+		{
+			renameStr = null;
+
+			//获取按钮
+			MenuItem item = sender as MenuItem;
+			ContextMenu cm = item.Parent as ContextMenu;
+			Button button = cm.PlacementTarget as Button;
+			Grid grid = button.Content as Grid;
+			
+
+			//弹窗修改
+			ReNameWindow window = new ReNameWindow();
+			window.nameStr = button.Name;
+			window.ShowDialog();
+
+			string rename = renameStr;
+			if(rename != null && rename != string.Empty)
+			{
+				//程序外文件夹改名
+				string directory = System.IO.Path.GetDirectoryName(grid.Tag.ToString());
+				string extension = System.IO.Path.GetExtension(grid.Tag.ToString());
+				string oldname = System.IO.Path.GetFileNameWithoutExtension(grid.Tag.ToString());
+				//if(File.Exists(System.IO.Path.Combine(directory,rename + extension)))
+				//{
+				//	MessageBox.Show("文件夹中存在此名称文件，请更改文件名。");
+				//}
+				try
+				{
+					Computer MyComputer = new Computer();
+					MyComputer.FileSystem.RenameFile(grid.Tag.ToString(),rename + extension);
+
+					//程序内检测名字然后改名
+					rename = CheckFileName(rename);
+					foreach(var a in grid.Children)
+					{
+						if(a.GetType() == typeof(TextBlock))
+						{
+							TextBlock textblock = a as TextBlock;
+							textblock.Text = rename;
+						}
+					}
+					rename = TransformNumbers(rename);
+					oldname = TransformNumbers(oldname);
+					ImageName[ImageName.IndexOf(oldname)] = rename;
+					grid.Tag = System.IO.Path.Combine(directory,rename + extension);
+					button.Name = rename;
+				}
+				catch(Exception ex)
+				{
+					MessageBox.Show(ex.Message);
+				}
+			}
 		}
 
 		private void scDrop(object sender,DragEventArgs e)
@@ -67,6 +154,7 @@ namespace UICS
 					CreateImage(path);
 				}
 			}
+			e.Handled = true;
 		}
 
 		private void scDragEnter(object sender,DragEventArgs e)
@@ -235,106 +323,102 @@ namespace UICS
 		private void CreateImage(string imagePath)
 		{
 			#region 生成图片
-			using(FileStream fileStream = new FileStream(imagePath,FileMode.Open,FileAccess.Read,FileShare.Read))
+
+			//获取扩展名
+			string fileTypeName = System.IO.Path.GetExtension(imagePath).Remove(0,1);
+			//获取不包含扩展名的文件名
+			string fileName = System.IO.Path.GetFileNameWithoutExtension(imagePath);
+
+			fileName = CheckFileName(fileName);
+			if(fileTypeName == "png" || fileTypeName == "jpg")
 			{
+				ImageBrush imagebrush = new ImageBrush();
+				BitmapImage bi = new BitmapImage();
+				bi.BeginInit();
+				bi.CacheOption = BitmapCacheOption.OnLoad;
+				bi.UriSource = new Uri(imagePath);
+				bi.EndInit();
+				double dpix = Math.Round(bi.DpiX,MidpointRounding.AwayFromZero);
+				double dpiy = Math.Round(bi.DpiY,MidpointRounding.AwayFromZero);
+				imagebrush.ImageSource = bi;
 
-				//获取包含扩展名的文件名 
-				//string fileFullName = fileStream.Name.Substring(fileStream.Name.LastIndexOf("\\") + 1);
-				//获取扩展名
-				string fileTypeName = fileStream.Name.Substring(fileStream.Name.LastIndexOf(".") + 1);
-				//获取不包含扩展名的文件名
-				string fileName = fileStream.Name.Substring(fileStream.Name.LastIndexOf("\\") + 1,fileStream.Name.LastIndexOf(".") - fileStream.Name.LastIndexOf("\\") - 1);
+				TextBlock textblock = new TextBlock();
+				textblock.Text = fileName;
+				textblock.TextWrapping = TextWrapping.Wrap;
+				textblock.VerticalAlignment = VerticalAlignment.Center;
+				//textblock.HorizontalAlignment = HorizontalAlignment.Center;
 
-				fileName = CheckFileName(fileName);
+				fileName = TransformNumbers(fileName);
 
-				fileStream.Flush();
-				fileStream.Close();
-				fileStream.Dispose();
-
-				if(fileTypeName == "png" || fileTypeName == "jpg")
+				Button button = new Button();
+				try
 				{
-					ImageBrush imagebrush = new ImageBrush();
-					BitmapImage bi = new BitmapImage(new Uri(imagePath));
-					double dpix = Math.Round(bi.DpiX,MidpointRounding.AwayFromZero);
-					double dpiy = Math.Round(bi.DpiY,MidpointRounding.AwayFromZero);
+					button.Name = fileName;
+					ImageName.Add(fileName);
+				}
+				catch(Exception ex)
+				{
+					MessageBox.Show(ex.Message + " 使用功能时会导致程序崩溃，请重新命名。");
+				}
 
-					imagebrush.ImageSource = bi;
+				WrapPanel wpanel = new WrapPanel();
+				wpanel.Orientation = Orientation.Vertical;
+				wpanel.Children.Add(new TextBlock() { Text = "X.DPI= " + dpix.ToString() });
+				wpanel.Children.Add(new TextBlock() { Text = "Y.DPI= " + dpiy.ToString() });
+				wpanel.Children.Add(new TextBlock() { Text = textblock.Text.ToString() });
 
-					TextBlock textblock = new TextBlock();
-					textblock.Text = fileName;
-					textblock.TextWrapping = TextWrapping.Wrap;
-					textblock.VerticalAlignment = VerticalAlignment.Center;
-					//textblock.HorizontalAlignment = HorizontalAlignment.Center;
+				button.ToolTip = wpanel;
+				button.Margin = new Thickness(20);
+				button.Background = new SolidColorBrush(Colors.Transparent);
+				button.BorderThickness = new Thickness(0);
+				button.Style = Resources["WindowStateButtonStyle"] as Style;
 
-					fileName = TransformNumbers(fileName);
+				Grid grid = new Grid();
+				grid.Tag = imagePath;
+				RowDefinition cd1 = new RowDefinition();
+				cd1.Height = new GridLength(1,GridUnitType.Auto);
+				grid.RowDefinitions.Add(cd1);
+				RowDefinition cd2 = new RowDefinition();
+				cd2.Height = new GridLength(1,GridUnitType.Auto);
+				grid.RowDefinitions.Add(cd2);
 
-					Button button = new Button();
-					try
+				Grid imageGrid = new Grid();
+				imageGrid.Background = imagebrush;
+
+				if(sizeCombobox.SelectedItem != null)
+				{
+					ComboBoxItem cbi = sizeCombobox.SelectedItem as ComboBoxItem;
+					imageGrid.Width = Convert.ToInt32(cbi.Tag);
+					imageGrid.Height = Convert.ToInt32(cbi.Tag);
+					if(Convert.ToInt32(cbi.Tag) >= 128)
 					{
-						button.Name = fileName;
-						ImageName.Add(fileName);
-					}
-					catch(Exception ex)
-					{
-						MessageBox.Show(ex.Message + " 使用功能时会导致程序崩溃，请重新命名。");
-					}
-
-					WrapPanel wpanel = new WrapPanel();
-					wpanel.Orientation = Orientation.Vertical;
-					wpanel.Children.Add(new TextBlock() { Text = "X.DPI= " + dpix.ToString() });
-					wpanel.Children.Add(new TextBlock() { Text = "Y.DPI= " + dpiy.ToString() });
-					wpanel.Children.Add(new TextBlock() { Text = textblock.Text.ToString() });
-
-					button.ToolTip = wpanel;
-					button.Margin = new Thickness(20);
-					button.Background = new SolidColorBrush(Colors.Transparent);
-					button.BorderThickness = new Thickness(0);
-					button.Style = Resources["WindowStateButtonStyle"] as Style;
-
-					Grid grid = new Grid();
-					RowDefinition cd1 = new RowDefinition();
-					cd1.Height = new GridLength(1,GridUnitType.Auto);
-					grid.RowDefinitions.Add(cd1);
-					RowDefinition cd2 = new RowDefinition();
-					cd2.Height = new GridLength(1,GridUnitType.Auto);
-					grid.RowDefinitions.Add(cd2);
-
-					Grid imageGrid = new Grid();
-					imageGrid.Background = imagebrush;
-
-					if(sizeCombobox.SelectedItem != null)
-					{
-						ComboBoxItem cbi = sizeCombobox.SelectedItem as ComboBoxItem;
-						imageGrid.Width = Convert.ToInt32(cbi.Tag);
-						imageGrid.Height = Convert.ToInt32(cbi.Tag);
-						if(Convert.ToInt32(cbi.Tag) >= 128)
-						{
-							button.Width = Convert.ToInt32(cbi.Tag) * 1.5;
-							button.Height = Convert.ToInt32(cbi.Tag) * 1.5;
-						}
-						else
-						{
-							button.Width = 128;
-							button.Height = 128;
-						}
+						button.Width = Convert.ToInt32(cbi.Tag) * 1.5;
+						button.Height = Convert.ToInt32(cbi.Tag) * 1.5;
 					}
 					else
 					{
-						imageGrid.Width = 32;
-						imageGrid.Height = 32;
 						button.Width = 128;
 						button.Height = 128;
 					}
-
-					grid.Children.Add(imageGrid);
-					grid.Children.Add(textblock);
-					Grid.SetRow(imageGrid,0);
-					Grid.SetRow(textblock,1);
-					button.Content = grid;
-
-					wrappanel.Children.Add(button);
 				}
+				else
+				{
+					imageGrid.Width = 32;
+					imageGrid.Height = 32;
+					button.Width = 128;
+					button.Height = 128;
+				}
+
+				grid.Children.Add(imageGrid);
+				grid.Children.Add(textblock);
+				Grid.SetRow(imageGrid,0);
+				Grid.SetRow(textblock,1);
+				button.Content = grid;
+				button.ContextMenu = cm;
+
+				wrappanel.Children.Add(button);
 			}
+
 			#endregion
 		}
 
@@ -453,11 +537,11 @@ namespace UICS
 					button.Visibility = Visibility.Visible;
 				}
 			}
-			Rect rc = SystemParameters.WorkArea;//获取工作区大小  
+			/*Rect rc = SystemParameters.WorkArea;//获取工作区大小  
 			this.Left = 0;//设置位置  
 			this.Top = 0;
 			this.Width = rc.Width;
-			this.Height = rc.Height;
+			this.Height = rc.Height;*/
 		}
 
 		/// <summary>
