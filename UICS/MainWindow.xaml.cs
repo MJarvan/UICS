@@ -56,6 +56,10 @@ namespace UICS
 			get; set;
 		}
 
+		/// <summary>
+		/// 应用程序路径
+		/// </summary>
+		string systempath = System.Windows.Forms.Application.StartupPath;
 
 
 		private void Window_Loaded(object sender,RoutedEventArgs e)
@@ -74,8 +78,126 @@ namespace UICS
 			MenuItem rename = new MenuItem();
 			rename.Header = "重命名";
 			rename.Click += Rename_Click;
+			MenuItem importClientHome = new MenuItem();
+			importClientHome.Header = "导入到ClientHome";
+			importClientHome.Tag = "ClientHome";
+			importClientHome.Click += Import_Click;
+			MenuItem importClient = new MenuItem();
+			importClient.Header = "导入到Client";
+			importClient.Tag = "Client";
+			importClient.Click += Import_Click;
+
 			cm.Items.Add(rename);
+			cm.Items.Add(importClientHome);
+			cm.Items.Add(importClient);
 		}
+
+		private void Import_Click(object sender,RoutedEventArgs e)
+		{
+			//获取图片信息
+			MenuItem item = sender as MenuItem;
+			ContextMenu cm = item.Parent as ContextMenu;
+			Button button = cm.PlacementTarget as Button;
+			Grid grid = button.Content as Grid;
+			string imagepath = grid.Tag.ToString();
+
+			//获取按键信息
+			MenuItem menuitem = sender as MenuItem;
+
+			string importpath = systempath + "\\Import" + menuitem.Tag.ToString() + ".txt";
+			ImportToFolder(menuitem.Tag.ToString(),imagepath,importpath);
+		}
+
+
+		private void importAll_Click(object sender,RoutedEventArgs e)
+		{
+			var a = MessageBox.Show("导出到ClientHome请选择是,导出到Client请选择否,取消导出请选择取消.(注意!导出会默认覆盖文件!)","导出",MessageBoxButton.YesNoCancel,MessageBoxImage.Information);
+			int okNum = 0;
+
+			if(a == MessageBoxResult.Yes)
+			{
+				string name = "ClientHome";
+				string importpath = systempath + "\\Import" + name + ".txt";
+				if(ImageName != null)
+				{
+					for(int i = 0;i < ImageName.Count;i++)
+					{
+						string buttonName = ImageName[i];
+						Button button = GetChildObject<Button>(wrappanel,buttonName);
+						Grid grid = button.Content as Grid;
+						string imagepath = grid.Tag.ToString();
+						if(ImportToFolder(name,imagepath,importpath))
+						{
+							okNum++;
+						}
+					}
+				}
+			}
+			else if (a == MessageBoxResult.No)
+			{
+				string name = "Client";
+				string importpath = systempath + "\\Import" + name + ".txt";
+				if(ImageName != null)
+				{
+					for(int i = 0;i < ImageName.Count;i++)
+					{
+						string buttonName = ImageName[i];
+						Button button = GetChildObject<Button>(wrappanel,buttonName);
+						Grid grid = button.Content as Grid;
+						string imagepath = grid.Tag.ToString();
+						if(ImportToFolder(name,imagepath,importpath))
+						{
+							okNum++;
+						}
+					}
+				}
+			}
+
+			if(okNum == ImageName.Count)
+			{
+				MessageBox.Show("导出成功!");
+			}
+		}
+
+		/// <summary>
+		/// 导入到文件夹
+		/// </summary>
+		/// <param name="importpath"></param>
+		private bool ImportToFolder(string name,string imagepath,string importpath)
+		{
+			bool returnBool = false;
+
+			string importCHpath;
+
+			if(File.Exists(importpath))
+			{
+				importCHpath = File.ReadAllText(importpath).ToString();
+				string filename = System.IO.Path.GetFileName(imagepath);
+				string fullpath = System.IO.Path.Combine(importCHpath,filename);
+
+				try
+				{
+					File.Copy(imagepath,fullpath,true);
+					returnBool = true;
+				}
+				catch(Exception ex)
+				{
+					MessageBox.Show(ex.Message);
+				}
+			}
+			else
+			{
+				MessageBox.Show("找不到" + name + "位置,请重新选择");
+				System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog();
+				fbd.ShowDialog();
+				importCHpath = fbd.SelectedPath;
+				File.WriteAllText(importpath,importCHpath);
+				ImportToFolder(name,imagepath,importpath);
+			}
+
+			return returnBool;
+		}
+
 
 		/// <summary>
 		/// 重命名事件
@@ -86,7 +208,7 @@ namespace UICS
 		{
 			renameStr = null;
 
-			//获取按钮
+			//获取图片信息
 			MenuItem item = sender as MenuItem;
 			ContextMenu cm = item.Parent as ContextMenu;
 			Button button = cm.PlacementTarget as Button;
@@ -113,7 +235,6 @@ namespace UICS
 				{
 					Computer MyComputer = new Computer();
 					MyComputer.FileSystem.RenameFile(grid.Tag.ToString(),rename + extension);
-
 					//程序内检测名字然后改名
 					rename = CheckFileName(rename);
 					foreach(var a in grid.Children)
@@ -137,6 +258,11 @@ namespace UICS
 			}
 		}
 
+		/// <summary>
+		/// 拖动放下
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
 		private void scDrop(object sender,DragEventArgs e)
 		{
 			//foreach(string str in e.Data.GetFormats())
@@ -157,6 +283,11 @@ namespace UICS
 			e.Handled = true;
 		}
 
+		/// <summary>
+		/// 拖动进入
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
 		private void scDragEnter(object sender,DragEventArgs e)
 		{
 			if(e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -179,7 +310,6 @@ namespace UICS
 			colorCombobox.Items.Clear();
 			ColorFF.Clear();
 
-			string systempath = System.Windows.Forms.Application.StartupPath;
 			ColorPath = systempath + "\\Color.txt";
 			double height = colorCombobox.ActualHeight;
 			double width = colorCombobox.ActualWidth;
@@ -605,39 +735,6 @@ namespace UICS
 			}
 			MatchButton_Click(sender,e);
 		}
-
-		///// <summary>
-		///// 空格或enter特殊处理
-		///// </summary>
-		///// <param name="sender"></param>
-		///// <param name="e"></param>
-		//private void ColorTextbox_KeyDownOrUp(object sender,KeyEventArgs e)
-		//{
-		//	TextBox textbox = sender as TextBox;
-		//	string text = textbox.Text.Trim();
-
-		//	if(e.Key == Key.Space)
-		//	{
-		//		textbox.Text = textbox.Text.Trim();
-		//		textbox.SelectionStart = textbox.Text.Length;
-		//	}
-		//	else if(e.Key == Key.Enter)   //  if (e.KeyValue == 13) 判断是回车键
-		//	{
-		//		if(textbox.Name == "FFTextbox" || textbox.Name == "BTextbox")
-		//		{
-		//			//MatchButton.Focus();
-		//			MatchButton_Click(sender,e);
-		//		}
-		//		else if(textbox.Name == "RTextbox")
-		//		{
-		//			GTextbox.Focus();
-		//		}
-		//		else if(textbox.Name == "GTextbox")
-		//		{
-		//			BTextbox.Focus();
-		//		}
-		//	}
-		//}
 
 		/// <summary>
 		/// 保存事件
