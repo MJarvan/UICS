@@ -86,10 +86,32 @@ namespace UICS
 			importClient.Header = "导入到Client";
 			importClient.Tag = "Client";
 			importClient.Click += Import_Click;
+			MenuItem location = new MenuItem();
+			location.Header = "定位到文件";
+			location.Click += Location_Click;
+			MenuItem copy = new MenuItem();
+			copy.Header = "复制";
+			copy.Click += Copy_Click;
 
 			cm.Items.Add(rename);
 			cm.Items.Add(importClientHome);
 			cm.Items.Add(importClient);
+			cm.Items.Add(location);
+			cm.Items.Add(copy);
+		}
+
+		private void Location_Click(object sender,RoutedEventArgs e)
+		{
+			//获取图片信息
+			MenuItem item = sender as MenuItem;
+			ContextMenu cm = item.Parent as ContextMenu;
+			Button button = cm.PlacementTarget as Button;
+			Grid grid = button.Content as Grid;
+			string imagepath = grid.Tag.ToString();
+
+			System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo("Explorer.exe");
+			psi.Arguments = "/e,/select," + imagepath;
+			System.Diagnostics.Process.Start(psi);
 		}
 
 		private void Import_Click(object sender,RoutedEventArgs e)
@@ -113,49 +135,49 @@ namespace UICS
 		{
 			var a = MessageBox.Show("导出到ClientHome请选择是,导出到Client请选择否,取消导出请选择取消.(注意!导出会默认覆盖文件!)","导出",MessageBoxButton.YesNoCancel,MessageBoxImage.Information);
 			int okNum = 0;
+			string name = string.Empty;
+			string importpath = string.Empty;
 
 			if(a == MessageBoxResult.Yes)
 			{
-				string name = "ClientHome";
-				string importpath = systempath + "\\Import" + name + ".txt";
-				if(ImageName != null)
-				{
-					for(int i = 0;i < ImageName.Count;i++)
-					{
-						string buttonName = ImageName[i];
-						Button button = GetChildObject<Button>(wrappanel,buttonName);
-						Grid grid = button.Content as Grid;
-						string imagepath = grid.Tag.ToString();
-						if(ImportToFolder(name,imagepath,importpath))
-						{
-							okNum++;
-						}
-					}
-				}
+				name = "ClientHome";
+				importpath = systempath + "\\Import" + name + ".txt";
 			}
 			else if (a == MessageBoxResult.No)
 			{
-				string name = "Client";
-				string importpath = systempath + "\\Import" + name + ".txt";
-				if(ImageName != null)
+				name = "Client";
+				importpath = systempath + "\\Import" + name + ".txt";
+			}
+
+			if(ImageName.Count != 0 && a != MessageBoxResult.Cancel)
+			{
+				for(int i = 0;i < ImageName.Count;i++)
 				{
-					for(int i = 0;i < ImageName.Count;i++)
+					string buttonName = ImageName[i];
+					Button button = GetChildObject<Button>(wrappanel,buttonName);
+					Grid grid = button.Content as Grid;
+					string imagepath = grid.Tag.ToString();
+					if(ImportToFolder(name,imagepath,importpath))
 					{
-						string buttonName = ImageName[i];
-						Button button = GetChildObject<Button>(wrappanel,buttonName);
-						Grid grid = button.Content as Grid;
-						string imagepath = grid.Tag.ToString();
-						if(ImportToFolder(name,imagepath,importpath))
-						{
-							okNum++;
-						}
+						okNum++;
 					}
 				}
 			}
 
-			if(okNum == ImageName.Count)
+			if(okNum == ImageName.Count && ImageName.Count != 0)
 			{
 				MessageBox.Show("导出成功!");
+			}
+			else
+			{
+				if(a != MessageBoxResult.Cancel)
+				{
+					MessageBox.Show("导出失败!一共" + ImageName.Count + "个图片,导出了" + okNum + "个图片!");
+				}
+				else
+				{
+					MessageBox.Show("您已经取消导出!");
+				}
 			}
 		}
 
@@ -227,10 +249,7 @@ namespace UICS
 				string directory = System.IO.Path.GetDirectoryName(grid.Tag.ToString());
 				string extension = System.IO.Path.GetExtension(grid.Tag.ToString());
 				string oldname = System.IO.Path.GetFileNameWithoutExtension(grid.Tag.ToString());
-				//if(File.Exists(System.IO.Path.Combine(directory,rename + extension)))
-				//{
-				//	MessageBox.Show("文件夹中存在此名称文件，请更改文件名。");
-				//}
+
 				try
 				{
 					Computer MyComputer = new Computer();
@@ -399,9 +418,27 @@ namespace UICS
 		}
 
 
-		private void test_Click(object sender,RoutedEventArgs e)
+		private void Copy_Click(object sender,RoutedEventArgs e)
 		{
-			Clipboard.SetText(FFTextbox.Text);
+			//获取图片信息
+			MenuItem item = sender as MenuItem;
+			ContextMenu cm = item.Parent as ContextMenu;
+			Button button = cm.PlacementTarget as Button;
+			Grid grid = button.Content as Grid;
+			BitmapSource bs = null;
+			foreach(var a in grid.Children)
+			{
+				if(a.GetType() == typeof(Grid))
+				{
+					Grid imagegrid = a as Grid;
+					ImageBrush ib = imagegrid.Background as ImageBrush;
+					bs = ib.ImageSource as BitmapImage;
+				}
+			}
+			if(bs != null)
+			{
+				Clipboard.SetImage(bs);
+			}
 		}
 
 		/// <summary>
